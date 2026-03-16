@@ -16,7 +16,7 @@ export default function ClinicSelector({
         height="14"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#1a6b5a"
+        stroke="#1a8a8a"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -27,7 +27,7 @@ export default function ClinicSelector({
       <select
         value={selected}
         onChange={(e) => onChange(e.target.value)}
-        className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1a6b5a] focus:border-transparent cursor-pointer"
+        className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1a8a8a] focus:border-transparent cursor-pointer"
       >
         {clinics.map((clinic) => (
           <option key={clinic} value={clinic}>

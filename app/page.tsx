@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import ChatMessage from "@/components/ChatMessage";
 import LoadingMessage from "@/components/LoadingMessage";
-import ClinicSelector from "@/components/ClinicSelector";
 
 export type Message = {
   id: string;
@@ -62,7 +61,7 @@ export default function Home() {
     loadingIntervalRef.current = setInterval(() => {
       step = Math.min(step + 1, LOADING_STEPS.length - 1);
       setLoadingStep(step);
-    }, 900);
+    }, 950);
   };
 
   const stopLoadingSteps = () => {
@@ -72,7 +71,7 @@ export default function Home() {
     }
   };
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -98,24 +97,24 @@ export default function Home() {
       });
 
       const data = await res.json();
-
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: data.answer ?? "Sorry, I couldn't get an answer for that.",
-        sql: data.sql,
-        tableData: data.tableData,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: data.answer ?? "Sorry, I couldn't get an answer for that.",
+          sql: data.sql,
+          tableData: data.tableData,
+          timestamp: new Date(),
+        },
+      ]);
     } catch {
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "Something went wrong. Please try again.",
+          content: "Something went wrong connecting to the data layer. Please try again.",
           timestamp: new Date(),
         },
       ]);
@@ -123,7 +122,8 @@ export default function Home() {
       stopLoadingSteps();
       setIsLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, selectedClinic]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -132,55 +132,172 @@ export default function Home() {
     }
   };
 
+  // Auto-resize textarea
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+  };
+
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-screen bg-[#f7f5f2]">
-      {/* Header */}
-      <header className="flex-none bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#1a6b5a] flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#fafaf8", fontFamily: "var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif" }}>
+
+      {/* ── Header ────────────────────────────────────────────────────────── */}
+      <header style={{
+        flexShrink: 0,
+        backgroundColor: "#1a8a8a",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.18)"
+      }}>
+        <div style={{ maxWidth: 896, margin: "0 auto", padding: "0 20px", display: "flex", alignItems: "stretch", justifyContent: "space-between", gap: 12, height: 58 }}>
+
+          {/* ── TMC Logo ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            {/* Mole icon mark */}
+            <div style={{
+              width: 34, height: 34, borderRadius: 8,
+              backgroundColor: "rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0
+            }}>
+              {/* Simplified mole/circle mark */}
+              <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="12" fill="rgba(255,255,255,0.9)"/>
+                <circle cx="16" cy="16" r="7" fill="#1a8a8a"/>
+                <circle cx="16" cy="16" r="3" fill="rgba(255,255,255,0.9)"/>
               </svg>
             </div>
-            <div>
-              <h1 className="text-base font-semibold text-gray-900 leading-tight">TMC Info Centre</h1>
-              <p className="text-xs text-gray-400 leading-tight">Powered by Microsoft Fabric · Claude AI</p>
+
+            {/* Text logo: THE / MOLE / Clinic stacked */}
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", lineHeight: 1 }}>
+              <span style={{
+                fontSize: 9.5, fontWeight: 300, color: "rgba(255,255,255,0.75)",
+                letterSpacing: "0.28em", textTransform: "uppercase"
+              }}>The</span>
+              <span style={{
+                fontSize: 18, fontWeight: 700, color: "white",
+                letterSpacing: "0.12em", textTransform: "uppercase",
+                lineHeight: 1.05, margin: "1px 0"
+              }}>MOLE</span>
+              <span style={{
+                fontSize: 9.5, fontWeight: 300, color: "rgba(255,255,255,0.75)",
+                letterSpacing: "0.22em", textTransform: "uppercase"
+              }}>Clinic</span>
+            </div>
+
+            {/* Divider */}
+            <div style={{ width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.2)", marginLeft: 4 }} />
+
+            {/* App name */}
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.95)", letterSpacing: "0.01em" }}>
+                Info Centre
+              </span>
+              <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.55)", marginTop: 1, letterSpacing: "0.01em" }}>
+                Fabric data · AI powered
+              </span>
             </div>
           </div>
-          <ClinicSelector
-            clinics={CLINICS}
-            selected={selectedClinic}
-            onChange={setSelectedClinic}
-          />
+
+          {/* ── Right controls ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Fabric status badge */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "5px 11px", borderRadius: 99,
+              backgroundColor: "rgba(255,255,255,0.12)",
+              border: "1px solid rgba(255,255,255,0.22)"
+            }}>
+              <span className="pulse-dot" style={{
+                width: 6, height: 6, borderRadius: "50%",
+                backgroundColor: "#7eeaea", flexShrink: 0
+              }} />
+              <span style={{ fontSize: 11.5, fontWeight: 500, color: "rgba(255,255,255,0.9)", whiteSpace: "nowrap" }}>
+                Fabric Connected
+              </span>
+            </div>
+
+            {/* Clinic selector */}
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <select
+                value={selectedClinic}
+                onChange={(e) => setSelectedClinic(e.target.value)}
+                style={{
+                  fontSize: 12.5, fontWeight: 500, color: "white",
+                  border: "1px solid rgba(255,255,255,0.25)", borderRadius: 8,
+                  padding: "5px 26px 5px 10px",
+                  backgroundColor: "rgba(255,255,255,0.12)",
+                  cursor: "pointer", appearance: "none",
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 7px center",
+                  outline: "none", fontFamily: "inherit"
+                }}
+              >
+                {CLINICS.map((c) => <option key={c} style={{ color: "#2d3436", backgroundColor: "white" }}>{c}</option>)}
+              </select>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Messages area */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-6">
+      {/* ── Messages ──────────────────────────────────────────────────────── */}
+      <main style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        <div style={{ maxWidth: 896, margin: "0 auto", padding: "24px 20px" }}>
+
           {isEmpty ? (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#e8f4f1] flex items-center justify-center mb-4">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1a6b5a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            /* Empty state */
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", textAlign: "center" }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: 18,
+                background: "linear-gradient(135deg, #e6f5f5 0%, #c0e4e4 100%)",
+                display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20
+              }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a8a8a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              <h2 style={{ fontSize: 22, fontWeight: 600, color: "#2d3436", marginBottom: 8 }}>
                 Ask anything about your clinics
               </h2>
-              <p className="text-gray-500 text-sm mb-8 max-w-sm">
-                Ask questions in plain English — I&apos;ll query your Fabric data and give you a clear answer.
+              <p style={{ fontSize: 14, color: "#636e72", marginBottom: 32, maxWidth: 380, lineHeight: 1.6 }}>
+                Questions in plain English — I&apos;ll query your Microsoft Fabric data and give you a clear answer with the supporting data.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-2xl">
+
+              {/* 2-column example grid */}
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr",
+                gap: 10, width: "100%", maxWidth: 680
+              }}>
                 {EXAMPLE_QUERIES.map((q) => (
                   <button
                     key={q}
                     onClick={() => sendMessage(q)}
-                    className="text-left px-4 py-3 rounded-xl bg-white border border-gray-200 text-sm text-gray-700 hover:border-[#1a6b5a] hover:text-[#1a6b5a] hover:shadow-sm transition-all duration-150 cursor-pointer"
+                    style={{
+                      textAlign: "left", padding: "12px 16px",
+                      borderRadius: 12, backgroundColor: "white",
+                      border: "1px solid #e8e6e1", fontSize: 13.5,
+                      color: "#2d3436", cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      fontFamily: "inherit", lineHeight: 1.4,
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.04)"
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a8a8a";
+                      (e.currentTarget as HTMLButtonElement).style.color = "#1a8a8a";
+                      (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(26,138,138,0.12)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "#e8e6e1";
+                      (e.currentTarget as HTMLButtonElement).style.color = "#2d3436";
+                      (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 1px 2px rgba(0,0,0,0.04)";
+                    }}
                   >
                     {q}
                   </button>
@@ -188,7 +305,8 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            /* Message thread */
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {messages.map((msg) => (
                 <ChatMessage key={msg.id} message={msg} />
               ))}
@@ -199,48 +317,93 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Input area */}
-      <footer className="flex-none bg-white border-t border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      {/* ── Input bar ─────────────────────────────────────────────────────── */}
+      <footer style={{
+        flexShrink: 0, backgroundColor: "white",
+        borderTop: "1px solid #e8e6e1",
+        boxShadow: "0 -1px 4px rgba(0,0,0,0.04)"
+      }}>
+        <div style={{ maxWidth: 896, margin: "0 auto", padding: "14px 20px" }}>
+
+          {/* Suggestion chips (after first message) */}
           {!isEmpty && (
-            <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
-              {EXAMPLE_QUERIES.slice(0, 3).map((q) => (
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", paddingBottom: 2 }}>
+              {EXAMPLE_QUERIES.slice(0, 4).map((q) => (
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="flex-none text-xs px-3 py-1.5 rounded-full bg-[#e8f4f1] text-[#1a6b5a] hover:bg-[#1a6b5a] hover:text-white transition-colors duration-150 whitespace-nowrap cursor-pointer"
+                  style={{
+                    flexShrink: 0, fontSize: 12, fontWeight: 500,
+                    padding: "5px 12px", borderRadius: 99,
+                    backgroundColor: "#e6f5f5", color: "#1a8a8a",
+                    border: "1px solid #b3e0e0", cursor: "pointer",
+                    whiteSpace: "nowrap", transition: "all 0.15s ease",
+                    fontFamily: "inherit"
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1a8a8a";
+                    (e.currentTarget as HTMLButtonElement).style.color = "white";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a8a8a";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#e6f5f5";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#1a8a8a";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "#b3e0e0";
+                  }}
                 >
                   {q}
                 </button>
               ))}
             </div>
           )}
-          <div className="flex items-end gap-3">
+
+          {/* Input row */}
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
             <textarea
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInput}
               onKeyDown={handleKeyDown}
               placeholder="Ask a question about your clinic data..."
               rows={1}
               disabled={isLoading}
-              className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a6b5a] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed max-h-32 bg-white text-gray-900 placeholder:text-gray-400"
-              style={{ overflowY: input.split("\n").length > 3 ? "auto" : "hidden" }}
+              style={{
+                flex: 1, resize: "none", borderRadius: 14,
+                border: "1.5px solid #e0ddd8", padding: "11px 16px",
+                fontSize: 14, lineHeight: 1.5, color: "#2d3436",
+                backgroundColor: "white", outline: "none",
+                fontFamily: "inherit", minHeight: 46, maxHeight: 120,
+                transition: "border-color 0.15s ease",
+                opacity: isLoading ? 0.6 : 1
+              }}
+              onFocus={(e) => { e.target.style.borderColor = "#1a8a8a"; }}
+              onBlur={(e) => { e.target.style.borderColor = "#e0ddd8"; }}
             />
             <button
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || isLoading}
-              className="flex-none w-11 h-11 rounded-xl bg-[#1a6b5a] text-white flex items-center justify-center hover:bg-[#135047] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 cursor-pointer"
+              style={{
+                flexShrink: 0, width: 46, height: 46,
+                borderRadius: 12, border: "none", cursor: "pointer",
+                background: (!input.trim() || isLoading)
+                  ? "#d4d0c8"
+                  : "linear-gradient(135deg, #1a8a8a 0%, #14706f 100%)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.15s ease",
+                boxShadow: (!input.trim() || isLoading) ? "none" : "0 2px 8px rgba(26,138,138,0.3)"
+              }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 2 11 13" />
-                <path d="M22 2 15 22 11 13 2 9l20-7z" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9l20-7z"/>
               </svg>
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2 text-center">
-            Scoped to: <span className="font-medium text-gray-600">{selectedClinic}</span> · Press Enter to send
-          </p>
+
+          <div style={{ marginTop: 8, fontSize: 11.5, color: "#b0aa9f", textAlign: "center" }}>
+            Scoped to&nbsp;
+            <span style={{ fontWeight: 500, color: "#636e72" }}>{selectedClinic}</span>
+            &nbsp;·&nbsp;Enter to send, Shift+Enter for new line
+          </div>
         </div>
       </footer>
     </div>
