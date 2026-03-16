@@ -17,9 +17,11 @@ export default function DataTable({
       border: "1px solid #e8e6e1",
       borderRadius: 12,
       overflow: "hidden",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+      boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+      maxWidth: "100%",    /* never wider than the parent column */
+      minWidth: 0
     }}>
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
           <thead>
             <tr style={{ backgroundColor: "#f4f3f0", borderBottom: "1px solid #e0ddd8" }}>

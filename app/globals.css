@@ -5,20 +5,15 @@
   --color-tmc-green-dark: #14706f;
   --color-tmc-green-light: #e6f5f5;
   --color-tmc-green-muted: #c0e4e4;
-  --color-warm-bg: #fafaf8;
+  --color-warm-bg: #f7f7f5;
   --color-warm-surface: #f4f3f0;
   --color-warm-border: #e8e6e1;
-
   --font-family-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
-html {
-  height: 100%;
-}
+html { height: 100%; }
 
 body {
   height: 100%;
@@ -27,10 +22,108 @@ body {
   font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent horizontal overflow on all screen sizes */
+  overflow-x: hidden;
 }
 
-#__next, main {
-  height: 100%;
+/* ── App shell: full-height flex column like a messaging app ────────────── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  /* 100dvh accounts for mobile browser chrome (address bar shrink/expand) */
+  height: 100dvh;
+  height: 100vh; /* fallback for older browsers */
+  background-color: #f7f7f5;
+  overflow: hidden; /* prevent double scrollbars */
+}
+
+/* ── Header inner container ─────────────────────────────────────────────── */
+.hdr-inner {
+  max-width: 896px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  height: 58px;
+}
+
+/* ── Header right-side controls ─────────────────────────────────────────── */
+.hdr-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Clinic selector: touch-friendly ────────────────────────────────────── */
+.clinic-select {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  padding: 5px 26px 5px 10px;
+  background-color: rgba(255,255,255,0.12);
+  cursor: pointer;
+  appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  outline: none;
+  font-family: inherit;
+  min-height: 36px; /* touch target */
+}
+
+/* ── Messages scroll area inner ─────────────────────────────────────────── */
+.msgs-inner {
+  max-width: 896px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* ── Footer inner ───────────────────────────────────────────────────────── */
+.ftr-inner {
+  max-width: 896px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  /* Safe area for iPhone home indicator */
+  padding-bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 0px)));
+}
+
+/* ── Example query grid: 2-col on desktop ───────────────────────────────── */
+.query-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 680px;
+}
+
+/* ── Chat bubble widths ─────────────────────────────────────────────────── */
+.bubble-user { max-width: 72%; }
+.bubble-asst { max-width: 85%; }
+
+/* ── Avatar indent for table / SQL / timestamp ──────────────────────────── */
+.msg-indent { margin-left: 40px; }
+
+/* ── Textarea: 16px on mobile prevents iOS auto-zoom ───────────────────── */
+.chat-input {
+  flex: 1;
+  resize: none;
+  border-radius: 14px;
+  border: 1.5px solid #e0ddd8;
+  padding: 11px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2d3436;
+  background-color: white;
+  outline: none;
+  font-family: inherit;
+  min-height: 46px;
+  max-height: 120px;
+  transition: border-color 0.15s ease;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
@@ -45,6 +138,9 @@ body {
   font-size: 0.8rem;
   line-height: 1.7;
   tab-size: 2;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 /* ── Loading dots ───────────────────────────────────────────────────────── */
@@ -64,18 +160,97 @@ body {
 }
 .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
 
-/* ── Fade-in for messages ───────────────────────────────────────────────── */
+/* ── Message fade-in ────────────────────────────────────────────────────── */
 @keyframes fade-slide-up {
   from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .msg-appear { animation: fade-slide-up 0.22s ease-out forwards; }
 
-/* ── Step progress animation ────────────────────────────────────────────── */
+/* ── Loading step text ──────────────────────────────────────────────────── */
 @keyframes fade-step {
-  0% { opacity: 0; transform: translateX(-4px); }
-  15% { opacity: 1; transform: translateX(0); }
-  85% { opacity: 1; transform: translateX(0); }
+  0%   { opacity: 0; transform: translateX(-4px); }
+  15%  { opacity: 1; transform: translateX(0); }
+  85%  { opacity: 1; transform: translateX(0); }
   100% { opacity: 0; transform: translateX(4px); }
 }
 .step-text { animation: fade-step 0.9s ease-in-out forwards; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ══════════════════════════════════════════════════════════════════════════*/
+
+/* ── Tablet (640 – 1024px) ──────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .hdr-inner {
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .msgs-inner {
+    padding: 20px 16px;
+  }
+  .ftr-inner {
+    padding: 12px 16px;
+    padding-bottom: max(12px, calc(10px + env(safe-area-inset-bottom, 0px)));
+  }
+  .bubble-user { max-width: 78%; }
+  .bubble-asst { max-width: 90%; }
+}
+
+/* ── Mobile (< 640px) ───────────────────────────────────────────────────── */
+@media (max-width: 639px) {
+
+  /* Header stacks vertically: logo row on top, controls row below */
+  .hdr-inner {
+    height: auto;
+    padding: 10px 14px 10px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  /* Controls row: space-between so badge and selector spread out */
+  .hdr-controls {
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 2px;
+  }
+
+  /* Selector needs full comfortable tap area on mobile */
+  .clinic-select {
+    font-size: 13px;
+    min-height: 38px;
+    padding: 7px 28px 7px 10px;
+  }
+
+  /* Tighter message area padding on narrow screens */
+  .msgs-inner {
+    padding: 12px 10px 16px;
+  }
+
+  /* Tighter footer on mobile */
+  .ftr-inner {
+    padding: 10px 12px;
+    padding-bottom: max(10px, calc(8px + env(safe-area-inset-bottom, 0px)));
+  }
+
+  /* Single column query chips */
+  .query-grid {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+
+  /* Wider message bubbles on narrow screens */
+  .bubble-user { max-width: 88%; }
+  .bubble-asst { max-width: 100%; width: 100%; }
+
+  /* Reduce avatar indent so content doesn't get too narrow */
+  .msg-indent { margin-left: 8px; }
+
+  /* iOS: prevent auto-zoom on textarea focus (needs ≥16px) */
+  .chat-input {
+    font-size: 16px;
+  }
+}

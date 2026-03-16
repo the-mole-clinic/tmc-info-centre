@@ -84,6 +84,10 @@ export default function Home() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
     setIsLoading(true);
     startLoadingSteps();
 
@@ -128,7 +132,6 @@ export default function Home() {
     }
   };
 
-  // Auto-resize textarea
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     e.target.style.height = "auto";
@@ -137,28 +140,27 @@ export default function Home() {
 
   const isEmpty = messages.length === 0;
 
+  // Inline SVG chevron for the select dropdown (URL-encoded for background-image)
+  const chevronSvg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#fafaf8", fontFamily: "var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif" }}>
+    // app-shell: flex column, full dvh height — the messaging-app layout
+    <div className="app-shell">
 
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <header style={{
-        flexShrink: 0,
-        backgroundColor: "#1a8a8a",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.18)"
-      }}>
-        <div style={{ maxWidth: 896, margin: "0 auto", padding: "0 20px", display: "flex", alignItems: "stretch", justifyContent: "space-between", gap: 12, height: 58 }}>
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <header style={{ flexShrink: 0, backgroundColor: "#1a8a8a", boxShadow: "0 2px 8px rgba(0,0,0,0.18)" }}>
+        {/* hdr-inner: flex row on desktop, flex column on mobile */}
+        <div className="hdr-inner">
 
-          {/* ── TMC Logo ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {/* ── Logo group (always a flex row) ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
             {/* Mole icon mark */}
             <div style={{
               width: 34, height: 34, borderRadius: 8,
               backgroundColor: "rgba(255,255,255,0.15)",
               border: "1px solid rgba(255,255,255,0.2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
             }}>
-              {/* Simplified mole/circle mark */}
               <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                 <circle cx="16" cy="16" r="12" fill="rgba(255,255,255,0.9)"/>
                 <circle cx="16" cy="16" r="7" fill="#1a8a8a"/>
@@ -166,21 +168,11 @@ export default function Home() {
               </svg>
             </div>
 
-            {/* Text logo: THE / MOLE / Clinic stacked */}
+            {/* THE / MOLE / Clinic stacked */}
             <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", lineHeight: 1 }}>
-              <span style={{
-                fontSize: 9.5, fontWeight: 300, color: "rgba(255,255,255,0.75)",
-                letterSpacing: "0.28em", textTransform: "uppercase"
-              }}>The</span>
-              <span style={{
-                fontSize: 18, fontWeight: 700, color: "white",
-                letterSpacing: "0.12em", textTransform: "uppercase",
-                lineHeight: 1.05, margin: "1px 0"
-              }}>MOLE</span>
-              <span style={{
-                fontSize: 9.5, fontWeight: 300, color: "rgba(255,255,255,0.75)",
-                letterSpacing: "0.22em", textTransform: "uppercase"
-              }}>Clinic</span>
+              <span style={{ fontSize: 9.5, fontWeight: 300, color: "rgba(255,255,255,0.75)", letterSpacing: "0.28em", textTransform: "uppercase" }}>The</span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: "white", letterSpacing: "0.12em", textTransform: "uppercase", lineHeight: 1.05, margin: "1px 0" }}>MOLE</span>
+              <span style={{ fontSize: 9.5, fontWeight: 300, color: "rgba(255,255,255,0.75)", letterSpacing: "0.22em", textTransform: "uppercase" }}>Clinic</span>
             </div>
 
             {/* Divider */}
@@ -188,28 +180,20 @@ export default function Home() {
 
             {/* App name */}
             <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.95)", letterSpacing: "0.01em" }}>
-                Info Centre
-              </span>
-              <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.55)", marginTop: 1, letterSpacing: "0.01em" }}>
-                Fabric data · AI powered
-              </span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.95)", letterSpacing: "0.01em" }}>Info Centre</span>
+              <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.55)", marginTop: 1, letterSpacing: "0.01em" }}>Fabric data · AI powered</span>
             </div>
           </div>
 
-          {/* ── Right controls ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* ── Right controls: hdr-controls becomes space-between on mobile ── */}
+          <div className="hdr-controls">
             {/* Fabric status badge */}
             <div style={{
               display: "flex", alignItems: "center", gap: 5,
               padding: "5px 11px", borderRadius: 99,
-              backgroundColor: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.22)"
+              backgroundColor: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.22)"
             }}>
-              <span className="pulse-dot" style={{
-                width: 6, height: 6, borderRadius: "50%",
-                backgroundColor: "#7eeaea", flexShrink: 0
-              }} />
+              <span className="pulse-dot" style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#7eeaea", flexShrink: 0 }} />
               <span style={{ fontSize: 11.5, fontWeight: 500, color: "rgba(255,255,255,0.9)", whiteSpace: "nowrap" }}>
                 Fabric Connected
               </span>
@@ -221,34 +205,28 @@ export default function Home() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
+              {/* clinic-select: touch-friendly sizing from CSS, color from inline */}
               <select
                 value={selectedClinic}
                 onChange={(e) => setSelectedClinic(e.target.value)}
-                style={{
-                  fontSize: 12.5, fontWeight: 500, color: "white",
-                  border: "1px solid rgba(255,255,255,0.25)", borderRadius: 8,
-                  padding: "5px 26px 5px 10px",
-                  backgroundColor: "rgba(255,255,255,0.12)",
-                  cursor: "pointer", appearance: "none",
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 7px center",
-                  outline: "none", fontFamily: "inherit"
-                }}
+                className="clinic-select"
+                style={{ backgroundImage: chevronSvg }}
               >
-                {CLINICS.map((c) => <option key={c} style={{ color: "#2d3436", backgroundColor: "white" }}>{c}</option>)}
+                {CLINICS.map((c) => (
+                  <option key={c} style={{ color: "#2d3436", backgroundColor: "white" }}>{c}</option>
+                ))}
               </select>
             </div>
           </div>
         </div>
       </header>
 
-      {/* ── Messages ──────────────────────────────────────────────────────── */}
+      {/* ── Messages (flex: 1, scrolls internally) ──────────────────────── */}
       <main style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-        <div style={{ maxWidth: 896, margin: "0 auto", padding: "24px 20px" }}>
-
+        {/* msgs-inner: responsive padding */}
+        <div className="msgs-inner">
           {isEmpty ? (
-            /* Empty state */
+            /* ── Empty state ── */
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", textAlign: "center" }}>
               <div style={{
                 width: 64, height: 64, borderRadius: 18,
@@ -263,26 +241,21 @@ export default function Home() {
                 Ask anything about your clinics
               </h2>
               <p style={{ fontSize: 14, color: "#636e72", marginBottom: 32, maxWidth: 380, lineHeight: 1.6 }}>
-                Questions in plain English — I&apos;ll query your Microsoft Fabric data and give you a clear answer with the supporting data.
+                Questions in plain English — I&apos;ll query your Fabric data and give you a clear answer with the supporting data.
               </p>
 
-              {/* 2-column example grid */}
-              <div style={{
-                display: "grid", gridTemplateColumns: "1fr 1fr",
-                gap: 10, width: "100%", maxWidth: 680
-              }}>
+              {/* query-grid: 2-col desktop, 1-col mobile */}
+              <div className="query-grid">
                 {EXAMPLE_QUERIES.map((q) => (
                   <button
                     key={q}
                     onClick={() => sendMessage(q)}
                     style={{
-                      textAlign: "left", padding: "12px 16px",
-                      borderRadius: 12, backgroundColor: "white",
-                      border: "1px solid #e8e6e1", fontSize: 13.5,
-                      color: "#2d3436", cursor: "pointer",
-                      transition: "all 0.15s ease",
-                      fontFamily: "inherit", lineHeight: 1.4,
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.04)"
+                      textAlign: "left", padding: "12px 16px", borderRadius: 12,
+                      backgroundColor: "white", border: "1px solid #e8e6e1",
+                      fontSize: 14, color: "#2d3436", cursor: "pointer",
+                      transition: "all 0.15s ease", fontFamily: "inherit",
+                      lineHeight: 1.4, boxShadow: "0 1px 2px rgba(0,0,0,0.04)"
                     }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a8a8a";
@@ -301,7 +274,7 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            /* Message thread */
+            /* ── Message thread ── */
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {messages.map((msg) => (
                 <ChatMessage key={msg.id} message={msg} />
@@ -313,28 +286,25 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ── Input bar ─────────────────────────────────────────────────────── */}
-      <footer style={{
-        flexShrink: 0, backgroundColor: "white",
-        borderTop: "1px solid #e8e6e1",
-        boxShadow: "0 -1px 4px rgba(0,0,0,0.04)"
-      }}>
-        <div style={{ maxWidth: 896, margin: "0 auto", padding: "14px 20px" }}>
+      {/* ── Input bar (flex-shrink:0 keeps it pinned at bottom) ─────────── */}
+      <footer style={{ flexShrink: 0, backgroundColor: "white", borderTop: "1px solid #e8e6e1", boxShadow: "0 -1px 4px rgba(0,0,0,0.04)" }}>
+        {/* ftr-inner: responsive padding */}
+        <div className="ftr-inner">
 
-          {/* Suggestion chips (after first message) */}
+          {/* Suggestion chips after first message */}
           {!isEmpty && (
-            <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", paddingBottom: 2 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
               {EXAMPLE_QUERIES.slice(0, 4).map((q) => (
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
                   style={{
                     flexShrink: 0, fontSize: 12, fontWeight: 500,
-                    padding: "5px 12px", borderRadius: 99,
+                    padding: "6px 13px", borderRadius: 99,
                     backgroundColor: "#e6f5f5", color: "#1a8a8a",
                     border: "1px solid #b3e0e0", cursor: "pointer",
                     whiteSpace: "nowrap", transition: "all 0.15s ease",
-                    fontFamily: "inherit"
+                    fontFamily: "inherit", minHeight: 34 /* touch target */
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1a8a8a";
@@ -355,6 +325,7 @@ export default function Home() {
 
           {/* Input row */}
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+            {/* chat-input: font-size 16px on mobile (prevents iOS auto-zoom) */}
             <textarea
               ref={inputRef}
               value={input}
@@ -363,15 +334,8 @@ export default function Home() {
               placeholder="Ask a question about your clinic data..."
               rows={1}
               disabled={isLoading}
-              style={{
-                flex: 1, resize: "none", borderRadius: 14,
-                border: "1.5px solid #e0ddd8", padding: "11px 16px",
-                fontSize: 14, lineHeight: 1.5, color: "#2d3436",
-                backgroundColor: "white", outline: "none",
-                fontFamily: "inherit", minHeight: 46, maxHeight: 120,
-                transition: "border-color 0.15s ease",
-                opacity: isLoading ? 0.6 : 1
-              }}
+              className="chat-input"
+              style={{ opacity: isLoading ? 0.6 : 1 }}
               onFocus={(e) => { e.target.style.borderColor = "#1a8a8a"; }}
               onBlur={(e) => { e.target.style.borderColor = "#e0ddd8"; }}
             />
@@ -398,7 +362,7 @@ export default function Home() {
           <div style={{ marginTop: 8, fontSize: 11.5, color: "#b0aa9f", textAlign: "center" }}>
             Scoped to&nbsp;
             <span style={{ fontWeight: 500, color: "#636e72" }}>{selectedClinic}</span>
-            &nbsp;·&nbsp;Enter to send, Shift+Enter for new line
+            &nbsp;·&nbsp;Enter to send
           </div>
         </div>
       </footer>
