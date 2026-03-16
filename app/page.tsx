@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ChatMessage from "@/components/ChatMessage";
 import LoadingMessage from "@/components/LoadingMessage";
+import { queryFabric } from "@/lib/query-client";
 
 export type Message = {
   id: string;
@@ -87,16 +88,11 @@ export default function Home() {
     startLoadingSteps();
 
     try {
-      const res = await fetch("/api/query", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: text.trim(),
-          clinic: selectedClinic === "All Clinics" ? null : selectedClinic,
-        }),
-      });
+      const data = await queryFabric(
+        text.trim(),
+        selectedClinic === "All Clinics" ? null : selectedClinic
+      );
 
-      const data = await res.json();
       setMessages((prev) => [
         ...prev,
         {
